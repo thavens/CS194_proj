@@ -1,0 +1,38 @@
+name: grpo
+
+resources:
+  accelerators: A100:2
+  # cloud: runpod
+  # image_id: docker:runpod/pytorch:2.8.0-py3.11-cuda12.8.1-cudnn-devel-ubuntu22.04
+
+workdir: .
+
+file_mounts:
+  ~/.netrc: ~/.netrc
+  ~/.git-credentials: ~/.git-credentials
+
+setup: |
+  ARCH=$(uname -m)
+  conda config --set auto_activate_base false
+  sudo apt update
+  sudo apt install -y gh
+
+  uv venv --python 3.12
+
+  if [ "$ARCH" = "aarch64" ]; then
+    echo "Installing VS Code for ARM64 (aarch64)..."
+    wget -O vscode.tgz 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-arm64'
+    tar xvf vscode.tgz
+    uv venv --python 3.12 --system-site-packages --seed
+  else
+    echo "Installing VS Code using wget"
+    wget -O vscode.tgz 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64'
+    tar xvf vscode.tgz
+    uv venv --python 3.12 --seed
+  fi
+  
+  chmod +x ./code
+  uv sync
+  uv sync --no-build-isolation-package flash-attn --extra compile
+
+
