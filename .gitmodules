@@ -1,3 +1,6 @@
 [submodule "Trl"]
 	path = Trl
 	url = https://github.com/thavens/trl.git
+[submodule "evals/agentdojo"]
+	path = evals/agentdojo
+	url = https://github.com/thavens/agentdojo.git
