@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=3 uv run trl vllm-serve --model Qwen/Qwen2.5-7B-Instruct &
+CUDA_VISIBLE_DEVICES=3 nohup uv run trl vllm-serve --model Qwen/Qwen2.5-7B-Instruct &
 
 CUDA_VISIBLE_DEVICES=0,1,2 uv run accelerate launch \
     --num_processes 3 \

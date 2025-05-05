@@ -11,7 +11,7 @@ file_mounts:
   ~/.netrc: ~/.netrc
   ~/.git-credentials: ~/.git-credentials
   /bucket:
-    name: my-sky-bucket-7569027
+    name: grpo-bucket
     store: s3
     mode: MOUNT
 
