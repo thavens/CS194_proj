@@ -14,37 +14,13 @@ from rich import progress
 import dotenv
 
 from dev.induced_instruction.batch_utils import batch_complete, batch_messages_complete
+from dev.induced_instruction.utils import insert_sentence_at_random_period
 from dev.prompts import (
     GENERATE_USERS_CONFLICTING_PROMPT,
     GET_VERIFIER_CLAUSES_PROMPT,
 )
 
 dotenv.load_dotenv()
-
-
-def insert_sentence_at_random_period(base_prompt: str, sentence: str) -> str:
-    # add a period to sentence if there is none before
-    sentence += (
-        "."
-        if sentence[-1] != "." and sentence[-1] != "?" and sentence[-1] != "!"
-        else ""
-    )
-    sentence = sentence.strip()
-
-    # Find all period positions in the base prompt using regex
-    period_matches = list(re.finditer(r"\.", base_prompt))
-
-    # If there are no periods, just append the sentence
-    if not period_matches:
-        return f"{base_prompt}\n{sentence}"
-
-    # Choose a random period match
-    chosen_match = random.choice(period_matches)
-    start, end = chosen_match.span()
-
-    # Construct the new prompt
-    new_prompt = base_prompt[:end] + f" {sentence}" + base_prompt[end:]
-    return new_prompt
 
 
 personas = datasets.load_dataset("proj-persona/PersonaHub", "persona", split="train")[
@@ -232,7 +208,6 @@ if args.generate_assistant_responses:
             msgs_batch.append(emphasize_instruction(row))
             filtered_dataset.append(row)
     print(f"Skipped {skips} prompts.")
-
 
     # load the dataset if it exists
     if os.path.exists(args.output_dir / "assistant_responses"):
