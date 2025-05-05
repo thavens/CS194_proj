@@ -20,8 +20,8 @@ HF_DATASET_ID = "thavens/judged_responses"          # ← update
 SPLIT = "train"
 USE_OPENAI = False  # Set to False to use Fireworks
 MODEL_ID = "gpt-4o" if USE_OPENAI else "accounts/fireworks/models/llama4-maverick-instruct-basic"
-fireworks_client = Fireworks(api_key="fw_3ZM3VTW7QGa9mx3h62uMFJgJ")
-openai_client = openai.OpenAI(api_key="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")
+fireworks_client = Fireworks(api_key="")
+openai_client = openai.OpenAI(api_key="")
 
 _SYSTEM_HEADER = """
 You are an expert AI evaluator who determines if an AI assistant has followed a given instruction.
