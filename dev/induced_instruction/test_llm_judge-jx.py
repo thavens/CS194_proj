@@ -6,6 +6,7 @@ See docstring in the previous version for installation & env details.
 from __future__ import annotations
 import os
 from typing import Dict, Any, Iterable, Tuple
+from dotenv import load_dotenv
 
 import backoff
 from datasets import load_dataset
@@ -15,13 +16,15 @@ from tqdm.auto import tqdm
 import re
 import json, re
 
+# Load environment variables
+load_dotenv()
 
 HF_DATASET_ID = "thavens/judged_responses"          # ← update
 SPLIT = "train"
 USE_OPENAI = False  # Set to False to use Fireworks
 MODEL_ID = "gpt-4o" if USE_OPENAI else "accounts/fireworks/models/llama4-maverick-instruct-basic"
-fireworks_client = Fireworks(api_key="")
-openai_client = openai.OpenAI(api_key="")
+fireworks_client = Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"))
+openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 _SYSTEM_HEADER = """
 You are an expert AI evaluator who determines if an AI assistant has followed a given instruction.
@@ -36,12 +39,10 @@ Be precise in your evaluation:
 IMPORTANT: You MUST output a single line of valid JSON with NO additional text before or after.
 The JSON must have exactly these keys:
 - "verdict": must be exactly "true" or "false" (lowercase, no quotes)
-- "explanation": a brief string explaining your reasoning
-- "missing_requirements": an array of strings listing unmet requirements (empty array if all met)
 
 Example outputs (copy these exact formats):
-{"verdict": true, "explanation": "The assistant included all three required data points about global warming from scientific sources.", "missing_requirements": []}
-{"verdict": false, "explanation": "The assistant failed to start with a greeting emoji as required.", "missing_requirements": ["Start with greeting emoji"]}
+{"verdict": true}
+{"verdict": false}
 
 DO NOT include any text before or after the JSON. Output ONLY the JSON object.
 """
@@ -60,6 +61,7 @@ def _last_assistant_message(msgs: list[Dict[str, str]]) -> str:
 FEW_SHOTS: list[dict[str, str | bool]] = [
     # ───────────────────────── EXAMPLE 1  (should be FALSE) ─────────────────────────
     {
+        
         "inst": (
             "Always respond with a disclaimer that the information is limited to the "
             "provided links and may be incomplete."
@@ -163,9 +165,9 @@ def _render_example(ex: dict[str, str | bool]) -> str:
     verdict = "true" if ex["gold"] else "false"
     return (
         "=== FEW-SHOT EXAMPLE ===\n"
-        f"INSTRUCTION:\n{ex['inst']}\n\n"
-        f"ASSISTANT REPLY:\n{ex['reply']}\n\n"
-        f"CORRECT VERDICT:\n{verdict}\n"
+        f"INSTRUCTION THE ASSISTANT HAD TO FOLLOW::\n{ex['inst']}\n\n"
+        f"ASSISTANT FINAL REPLY:\n{ex['reply']}\n\n"
+        f"VERDICT:\n{verdict}\n"
         f"EXPLANATION:\n{ex['explanation']}\n"
         "========================"
     )
@@ -193,7 +195,7 @@ def build_prompt(example: Dict[str, Any]) -> list[Dict[str, str]]:
         f"INSTRUCTION THE ASSISTANT HAD TO FOLLOW:\n{inst}\n\n"
         f"ASSISTANT FINAL REPLY:\n{assistant_reply}\n\n"
         f"ENTIRE MESSAGE:\n{example['messages']}\n\n"
-        "QUESTION: Did the ASSISTANT FINAL REPLY follow the INSTRUCTION THE ASSISTANT HAD TO FOLLOW? "
+        "VERDICT:"
     )
 
     return [
@@ -300,26 +302,26 @@ def main() -> None:
         print("-"*50)
         for i, case in enumerate(failures, 1):
             print(f"\n{'='*20} Case {i} {'='*20}")
-            print(f"\n📊 DATASET INDEX: {case['index']}")
-            print("\n📝 INSTRUCTION:")
+            print(f"\nDATASET INDEX: {case['index']}")
+            print("\nINSTRUCTION:")
             print("-"*20)
             print(case['instruction'])
             
-            print("\n💬 ASSISTANT REPLY:")
+            print("\nASSISTANT REPLY:")
             print("-"*20)
             print(case['assistant_reply'])
             
-            print("\n⚖️ VERDICT:")
+            print("\nVERDICT:")
             print("-"*20)
-            print(f"Gold standard: {'✅ TRUE' if case['gold'] else '❌ FALSE'}")
-            print(f"Model's verdict: {'✅ TRUE' if case['predicted'] else '❌ FALSE'}")
+            print(f"Gold standard: {'TRUE' if case['gold'] else 'FALSE'}")
+            print(f"Model's verdict: {'TRUE' if case['predicted'] else 'FALSE'}")
             
-            print("\n🤔 MODEL'S EXPLANATION:")
+            print("\nMODEL'S EXPLANATION:")
             print("-"*20)
             print(case['model_explanation'])
             
             if case['missing_requirements']:
-                print("\n❌ MISSING REQUIREMENTS:")
+                print("\nMISSING REQUIREMENTS:")
                 print("-"*20)
                 for req in case['missing_requirements']:
                     print(f"• {req}")
@@ -331,18 +333,18 @@ def main() -> None:
         print("-"*50)
         for i, case in enumerate(parsing_errors, 1):
             print(f"\n{'='*20} Case {i} {'='*20}")
-            print(f"\n📊 DATASET INDEX: {case['index']}")
-            print("\n📝 INSTRUCTION:")
+            print(f"\nDATASET INDEX: {case['index']}")
+            print("\nINSTRUCTION:")
             print("-"*20)
             print(case['instruction'])
             
-            print("\n💬 ASSISTANT REPLY:")
+            print("\nASSISTANT REPLY:")
             print("-"*20)
             print(case['assistant_reply'])
             
-            print("\n⚖️ GOLD STANDARD:")
+            print("\nGOLD STANDARD:")
             print("-"*20)
-            print(f"{'✅ TRUE' if case['gold'] else '❌ FALSE'}")
+            print(f"{'TRUE' if case['gold'] else 'FALSE'}")
             print("\n" + "="*50)
 
 
