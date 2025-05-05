@@ -57,10 +57,29 @@ def random_reward(completions, **kwargs):
 def easy_reward(completions, **kwargs):
     return ["." not in comp[0]["content"] for comp in completions]
 
+def reward_msgs(instruction, response):
+    return [
+        {"role": "user", "content": f"""\
+# Context
+### Rule:
+{instruction}
+
+### Response:
+{response}
+
+# Instruction
+Repond with "Score: 1" if the response follows the rule.
+Repond with "Score: 0" if the response does not follow the rule.
+
+If the response follows the rule, the score is 1.
+If the response does not adhere to the rule, the score is 0.
+"""},
+        {"role": "assistant", "content": "Score: "}
+    ]
 
 def instruction_reward(prompts, completions, ground_truth, ref_model, tokenizer):
     prompts = [
-        make_judge_messages(instruction=gt, completion=comp[0]["content"])
+        reward_msgs(instruction=gt, response=comp[0]["content"])
         for gt, comp in zip(ground_truth, completions)
     ]
     tokenized_prompts = [
@@ -89,17 +108,17 @@ def instruction_reward(prompts, completions, ground_truth, ref_model, tokenizer)
     # indexes to gather
     # logits shape [batch_size, sequence_length, vocab_size]
     # indices of interest
-    # " yes" token is id 9834
-    # " no" token is id 902
-    # [interest[0], " yes"]
-    # [interest[0], " no"]
-    # [interest[1], " yes"]
-    # [interest[1], " no"]
-    logits_interest: torch.Tensor = lmoutput.squeeze()[
-        interest
-    ]  # shape: [interest, vocab_size]
+    # " 1" token is id 16
+    # " 0" token is id 15
+    # [interest[0], " 1"]
+    # [interest[0], " 0"]
+    # [interest[1], " 1"]
+    # [interest[1], " 0"]
+        logits_interest: torch.Tensor = lmoutput.squeeze()[
+            interest
+        ]  # shape: [interest, vocab_size]
 
-    # reverse the true, false because index 1 is true and index 0 is false based on rewards as index
-    select = torch.tensor([902, 9834]).cuda()
-    tf_logits = logits_interest.index_select(1, select)  # shape: [interest, 2]
+        # reverse the true, false because index 1 is true and index 0 is false based on rewards as index
+        select = torch.tensor([15, 16]).cuda()
+        tf_logits = logits_interest.index_select(1, select)  # shape: [interest, 2]
     return list(torch.argmax(tf_logits, dim=1).cpu())

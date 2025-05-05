@@ -14,28 +14,31 @@ from dev.grpo.reward_function import instruction_reward, easy_reward, llm_reward
 os.environ["WANDB_PROJECT"] = "tldr"
 
 dataset = load_dataset(
-    "normster/RealGuardrails", "train_sft", split="train[:2%]"
+    "thavens/simple_instructions", "user_queries", split="train"
 ).to_list()
+
 
 # Format dataset into OpenAI messages format
 def format_messages(example):
-    rule = "Respond using solely exclamation marks as punctuation."
-    messages = deepcopy(example["messages"])
-    messages[0]["content"] = messages[0]["content"] + "\n" + rule
-    messages = messages[:2]
+    messages = example["messages"]
+    rule = example["new_instruction"]
     return {"prompt": messages, "ground_truth": rule}
 
 
-formatted_dataset = Dataset.from_list(
-    thread_map(format_messages, dataset, max_workers=128)
-)
+formatted_dataset = Dataset.from_list(list(map(format_messages, dataset)))
 
 # argparse the output directory, run name, and reward function
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--output_dir",
+    "--model",
     type=str,
     default="/storage_fast/models/michael_lavery/system/",
+    help="The output directory where the model predictions and checkpoints will be written.",
+)
+parser.add_argument(
+    "--output_dir",
+    type=str,
+    default="Qwen/Qwen2.5-1.5B-Instruct",
     help="The output directory where the model predictions and checkpoints will be written.",
 )
 parser.add_argument(
@@ -66,49 +69,34 @@ training_args = GRPOConfig(
     lr_scheduler_type="cosine",
     num_generations=24,  # 16
     per_device_train_batch_size=8,  # 8
-    gradient_accumulation_steps=4,
+    gradient_accumulation_steps=8,
     num_iterations=4,
     report_to="wandb",
     run_name=args.run_name,
     num_train_epochs=3,
     max_prompt_length=512,
-    max_completion_length=512,
+    max_completion_length=1024,
     save_steps=100,
+    save_total_limit=1,
     bf16=True,
     gradient_checkpointing=True,
     use_vllm=True,
     optim="adamw_torch_fused",
+    resume_from_checkpoint=True,
 )
 
-model_name = "/scratch/public_models/huggingface/Qwen/Qwen2.5-1.5B-Instruct/"
 model = AutoModelForCausalLM.from_pretrained(
-    model_name,
+    args.model,
     torch_dtype=torch.bfloat16,
     attn_implementation="flash_attention_2",
     use_cache=False,
 )
 
 tokenizer = AutoTokenizer.from_pretrained(
-    model_name,
+    args.model,
     padding_side="left",
 )
 tokenizer.padding_side = "left"
-
-peft_config = LoraConfig(
-    r=128,
-    lora_alpha=128,
-    target_modules=[
-        "q_proj",
-        "k_proj",
-        "v_proj",
-        "o_proj",
-        "up_proj",
-        "down_proj",
-        "gate_proj",
-    ],
-    task_type="CAUSAL_LM",
-    lora_dropout=0.1,
-)
 
 reward_funcs = {
     "easy_reward": easy_reward,
@@ -123,7 +111,6 @@ trainer = GRPOTrainer(
     reward_funcs=reward_func,
     args=training_args,
     train_dataset=formatted_dataset,
-    # peft_config=peft_config,
 )
 trainer.train()
 
