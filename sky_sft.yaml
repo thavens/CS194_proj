@@ -1,7 +1,7 @@
 name: grpo
 
 resources:
-  accelerators: H100:4
+  accelerators: h100:4
   use_spot: true
   cloud: gcp
 
@@ -38,7 +38,8 @@ setup: |
   uv sync
   uv sync --no-build-isolation-package flash-attn --extra compile
 
-# run: |
+run: |
+  bash dev/sft/tune.sh
 #   uv run python dev/sft/sft.py --model_path Qwen/Qwen2.5-1.5B-Instruct --output_dir bucket/Qwen2.5-1.5B-Instruct --max_length 2048
 #   uv run python dev/sft/sft.py --model_path Qwen/Qwen2.5-1.5B-Instruct --output_dir bucket/Qwen2.5-1.5B-Instruct-long --max_length 4096
 #   uv run python dev/sft/sft.py --model_path Qwen/Qwen2.5-3B-Instruct --output_dir bucket/Qwen2.5-3B-Instruct --max_length 2048

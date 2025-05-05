@@ -41,12 +41,24 @@ class ScriptArguments:
         default=True,
         metadata={"help": "Use gradient checkpointing"},
     )
+    run_name: str = field(
+        default="Qwen2.5-0.5B-Instruct",
+        metadata={"help": "Name of the run"},
+    )
+    dataset_path: str = field(
+        default="thavens/simple_instructions",
+        metadata={"help": "Path to the dataset"},
+    )
+    dataset_subset: str = field(
+        default="assistant_responses",
+        metadata={"help": "Subset of the dataset"},
+    )
     
     
 parser = HfArgumentParser(ScriptArguments)
 args: ScriptArguments = parser.parse_args_into_dataclasses()[0]
 
-dataset = load_dataset("thavens/simple_instructions", split="train")
+dataset = load_dataset(args.dataset_path, args.dataset_subset, split="train")
 
 tokenizer = AutoTokenizer.from_pretrained(args.model_path)
 tokenizer.chat_template = TEMPLATE
@@ -103,7 +115,7 @@ dataset[:] = map(apply_chat_template_mask_non_assisstant, dataset)
 dataset = (
     Dataset.from_list(dataset)
     .shuffle(seed=42)
-    .remove_columns(["messages", "new_instruction"])
+    .remove_columns(["messages"])
 )
 
 model = AutoModelForCausalLM.from_pretrained(
@@ -130,6 +142,8 @@ training_args = SFTConfig(
     save_total_limit=1,
     resume_from_checkpoint=True,
     logging_steps=1,
+    run_name=args.run_name,
+    report_to="wandb",
 )
 trainer = SFTTrainer(
     model=model,

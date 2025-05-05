@@ -26,6 +26,7 @@ dependencies = [
     "lxml-html-clean>=0.4.2",
     "playwright>=1.51.0",
     "scrapfly-sdk>=0.8.23",
+    "agentdojo",
 ]
 
 [build-system]
@@ -47,6 +48,7 @@ torch = { index = "pytorch" }
 torchvision = { index = "pytorch" }
 torchaudio = { index = "pytorch" }
 trl = { path = "Trl", editable = true }
+agentdojo = { path = "evals/agentdojo", editable = true }
 
 [[tool.uv.index]]
 name = "pytorch"
