@@ -1,6 +1,5 @@
 """
-llm_judge_pipeline.py  ── v2
-See docstring in the previous version for installation & env details.
+Context: Used LLMs to assist with writing this code, including helping generate system prompts, response parsing, print statements, and commenting.
 """
 
 from __future__ import annotations
