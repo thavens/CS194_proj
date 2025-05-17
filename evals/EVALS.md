@@ -15,3 +15,9 @@ Usage for running/scoring benchmarks varies but is mostly documented in the diff
 Results in output directories can be read using `read.sh` scripts that calculate metrics with bootstrap confidence intervals.
 
 RealGuardrails, Monkey Island stress test, S-IFEval, and TensorTrust use a simple inference wrapper implemented in `torchllms` which dispatches to either vLLM for local models or the OpenAI API for hosted models. Other OpenAI-compatible providers can be used by setting the `base_url` parameter in [torchllms/inference/providers.py](https://github.com/normster/torchllms/blob/main/torchllms/inference/providers.py#L182), which `torchllms` currently handles automatically for DeepSeek (using together.ai) and Gemini.
+
+## CMDs
+
+1. **IFEVAL**: `bash run_vllm.sh {model_dir}`
+2. **LLM RULES**: `bash run_vllm.sh {model_dir}`
+3. **MMLU**: `bash run.sh {model_dir}`
