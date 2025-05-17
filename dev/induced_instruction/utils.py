@@ -1,6 +1,7 @@
 import random
 import re
 
+
 def insert_sentence_at_random_period(base_prompt: str, sentence: str) -> str:
     # add a period to sentence if there is none before
     sentence += (

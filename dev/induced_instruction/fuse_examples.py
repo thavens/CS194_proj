@@ -11,7 +11,9 @@ import random
 from dev.induced_instruction.utils import insert_sentence_at_random_period
 import itertools
 
-response_ds = datasets.load_dataset("thavens/simple_instructions", split="train").to_list()
+response_ds = datasets.load_dataset(
+    "thavens/simple_instructions", split="train"
+).to_list()
 clause_ds = datasets.load_from_disk("dataset_v2/clauses").to_list()
 
 
@@ -21,22 +23,22 @@ dataset_examples = []
 for ex in clause_ds:
     matches = re.findall(r"(?s)<clause>(.*?)</clause>", ex["response"])
     clauses = [match.strip() for match in matches]
-    
+
     sys_msg = ex["sys_prompt"]
     candidates = []
     for clause in clauses:
         if clause in new_inst_to_example:
             candidates.append(new_inst_to_example[clause])
-    
+
         # build the fused system message
         sys_msg = insert_sentence_at_random_period(sys_msg, clause)
-        
+
     # messages[0] is the system message
     # messages[1] is the user message
     # messages[2:] is the assistant message
     # extract each messages[1:]
     ua_prompts = [c["messages"][1:] for c in candidates]
-    
+
     # fuse the user prompt and assistant responses randomly
     for combination in itertools.permutations(range(len(ua_prompts)), len(ua_prompts)):
         msgs = [

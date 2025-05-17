@@ -3,6 +3,7 @@ from tqdm.contrib.concurrent import thread_map
 import datasets
 
 import dotenv
+
 dotenv.load_dotenv()
 
 # So this attempt to grade the user responses that were created by 3.5 haiku. This judgment should near 100% instruction following rate
@@ -97,5 +98,6 @@ thread_map(claude_judge, dataset, max_workers=10)
 dataset = datasets.Dataset.from_list(dataset)
 dataset.save_to_disk("outputs/assistant_responses_judged")
 dataset.push_to_hub(
-    "thavens/assistant_responses_judged", commit_message="claude 3.5 user prompts. gt should be 100%"
+    "thavens/assistant_responses_judged",
+    commit_message="claude 3.5 user prompts. gt should be 100%",
 )

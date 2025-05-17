@@ -11,7 +11,12 @@ import jsonlines
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--outputs_dir", type=Path, required=True)
-    parser.add_argument("--bootstrap", type=int, default=0, help="Number of bootstrap iterations for confidence intervals")
+    parser.add_argument(
+        "--bootstrap",
+        type=int,
+        default=0,
+        help="Number of bootstrap iterations for confidence intervals",
+    )
     return parser.parse_args()
 
 
@@ -57,12 +62,18 @@ def compute_scores(results: Dict[str, List]) -> Dict[str, float]:
     scores = {}
     for suite in SUITE_TO_EVALUATOR:
         pass_rate = sum(results[suite]) / len(results[suite])
-        pass_rate_nopost = sum(results[f"{suite}_nopost"]) / len(results[f"{suite}_nopost"])
+        pass_rate_nopost = sum(results[f"{suite}_nopost"]) / len(
+            results[f"{suite}_nopost"]
+        )
         scores[suite] = pass_rate
         scores[f"{suite}_nopost"] = pass_rate_nopost
 
-    macro_average = sum([scores[suite] for suite in SUITE_TO_EVALUATOR]) / len(SUITE_TO_EVALUATOR)
-    macro_average_nopost = sum([scores[f"{suite}_nopost"] for suite in SUITE_TO_EVALUATOR]) / len(SUITE_TO_EVALUATOR)
+    macro_average = sum([scores[suite] for suite in SUITE_TO_EVALUATOR]) / len(
+        SUITE_TO_EVALUATOR
+    )
+    macro_average_nopost = sum(
+        [scores[f"{suite}_nopost"] for suite in SUITE_TO_EVALUATOR]
+    ) / len(SUITE_TO_EVALUATOR)
     scores["macro-average"] = macro_average
     scores["macro-average_nopost"] = macro_average_nopost
 
@@ -89,10 +100,7 @@ def main():
     if args.bootstrap > 0:
         scores_list = defaultdict(list)
         for _ in range(args.bootstrap):
-            sample = {
-                k: random.choices(results[k], k=len(results[k]))
-                for k in results
-            }
+            sample = {k: random.choices(results[k], k=len(results[k])) for k in results}
             scores_ = compute_scores(sample)
             for k in scores:
                 scores_list[k].append(scores_[k])

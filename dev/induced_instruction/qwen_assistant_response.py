@@ -9,7 +9,9 @@ from tqdm.contrib.concurrent import thread_map
 
 QWEN_SCHEMA = list(OPENAI_SCHEMAS.values())
 
-dataset = datasets.load_from_disk("dataset_v2/user_queries").shuffle(seed=52).to_list()[:40]
+dataset = (
+    datasets.load_from_disk("dataset_v2/user_queries").shuffle(seed=52).to_list()[:40]
+)
 
 client = openai.OpenAI(api_key="None", base_url="http://localhost:8000/v1")
 model_name = client.models.list().data[0].id
@@ -52,11 +54,21 @@ def tool_use_loop(messages, new_instruction):
                     passed += 1
             if passed == 0:
                 with open("tmp.json", "a") as f:
-                    f.write(json.dumps({"messages": messages, "new_instruction": new_instruction}) + "\n")
+                    f.write(
+                        json.dumps(
+                            {"messages": messages, "new_instruction": new_instruction}
+                        )
+                        + "\n"
+                    )
                 return messages
         else:
             with open("tmp.json", "a") as f:
-                f.write(json.dumps({"messages": messages, "new_instruction": new_instruction}) + "\n")
+                f.write(
+                    json.dumps(
+                        {"messages": messages, "new_instruction": new_instruction}
+                    )
+                    + "\n"
+                )
             return messages
 
 
@@ -78,6 +90,7 @@ thread_map(
     desc="Collecting Qwen Assistant responses",
     total=len(dataset),
 )
+
 
 def reformat_message(message):
     if "tool_calls" not in message:
@@ -104,11 +117,10 @@ def reformat_message(message):
             ],
         }
 
+
 def reformat_messages(messages):
-    return [
-        reformat_message(message)
-        for message in messages
-    ]
+    return [reformat_message(message) for message in messages]
+
 
 # save as an actual dataset
 with open("tmp.json", "r") as f:
@@ -118,10 +130,12 @@ with open("tmp.json", "r") as f:
 # convert the dataset to similar to the claude messages format
 result = []
 for row in dataset:
-    result.append({
-        "messages": reformat_messages(row["messages"]),
-        "new_instruction": row["new_instruction"]
-    })
+    result.append(
+        {
+            "messages": reformat_messages(row["messages"]),
+            "new_instruction": row["new_instruction"],
+        }
+    )
 
 ds = datasets.Dataset.from_list(result)
 print(ds)

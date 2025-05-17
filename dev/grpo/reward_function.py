@@ -57,9 +57,12 @@ def random_reward(completions, **kwargs):
 def easy_reward(completions, **kwargs):
     return ["." not in comp[0]["content"] for comp in completions]
 
+
 def reward_msgs(instruction, response):
     return [
-        {"role": "user", "content": f"""\
+        {
+            "role": "user",
+            "content": f"""\
 # Context
 ### Rule:
 {instruction}
@@ -73,9 +76,11 @@ Repond with "Score: 0" if the response does not follow the rule.
 
 If the response follows the rule, the score is 1.
 If the response does not adhere to the rule, the score is 0.
-"""},
-        {"role": "assistant", "content": "Score: "}
+""",
+        },
+        {"role": "assistant", "content": "Score: "},
     ]
+
 
 def instruction_reward(prompts, completions, ground_truth, ref_model, tokenizer):
     prompts = [
@@ -105,15 +110,15 @@ def instruction_reward(prompts, completions, ground_truth, ref_model, tokenizer)
         lmoutput: torch.FloatTensor = ref_model.forward(
             input_ids, position_ids=position_ids, use_cache=False
         ).logits
-    # indexes to gather
-    # logits shape [batch_size, sequence_length, vocab_size]
-    # indices of interest
-    # " 1" token is id 16
-    # " 0" token is id 15
-    # [interest[0], " 1"]
-    # [interest[0], " 0"]
-    # [interest[1], " 1"]
-    # [interest[1], " 0"]
+        # indexes to gather
+        # logits shape [batch_size, sequence_length, vocab_size]
+        # indices of interest
+        # " 1" token is id 16
+        # " 0" token is id 15
+        # [interest[0], " 1"]
+        # [interest[0], " 0"]
+        # [interest[1], " 1"]
+        # [interest[1], " 0"]
         logits_interest: torch.Tensor = lmoutput.squeeze()[
             interest
         ]  # shape: [interest, vocab_size]

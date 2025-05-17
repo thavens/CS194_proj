@@ -69,13 +69,19 @@ def read_prompt_list(input_jsonl_filename):
     with open(input_jsonl_filename, "r") as f:
         for line in f:
             example = json.loads(line)
-            if _INSTRUCTION_IDS_TO_SKIP.value and len(set(example["instruction_id_list"]).intersection(set(_INSTRUCTION_IDS_TO_SKIP.value))):
+            if _INSTRUCTION_IDS_TO_SKIP.value and len(
+                set(example["instruction_id_list"]).intersection(
+                    set(_INSTRUCTION_IDS_TO_SKIP.value)
+                )
+            ):
                 continue
             inputs.append(
                 InputExample(
                     key=example["key"],
                     instruction_id_list=example["instruction_id_list"],
-                    messages=example.get("messages", [{"role": "user", "content": example['prompt']}]),
+                    messages=example.get(
+                        "messages", [{"role": "user", "content": example["prompt"]}]
+                    ),
                     kwargs=example["kwargs"],
                 )
             )
@@ -187,7 +193,7 @@ def compute_scores(results: Dict[str, List]) -> Dict[str, float]:
         prompt_total = len(results[f"prompt_{version}"])
         prompt_acc = prompt_correct / prompt_total
         scores[f"prompt_{version}"] = prompt_acc
-        
+
         inst_correct = sum([sum(x) for x in results[f"instruction_{version}"]])
         inst_total = sum([len(x) for x in results[f"instruction_{version}"]])
         inst_acc = inst_correct / inst_total
@@ -220,10 +226,7 @@ def main(argv):
     if _BOOTSTRAP.value > 0:
         scores_list = defaultdict(list)
         for _ in range(_BOOTSTRAP.value):
-            sample = {
-                k: random.choices(results[k], k=len(results[k]))
-                for k in results
-            }
+            sample = {k: random.choices(results[k], k=len(results[k])) for k in results}
             scores_ = compute_scores(sample)
             for k in scores:
                 scores_list[k].append(scores_[k])

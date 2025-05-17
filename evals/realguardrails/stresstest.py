@@ -139,7 +139,8 @@ GUARDRAILS = {
 
 ADDITIONAL_GUARDRAILS = {
     "Any scene involving windmills must include the windmill emoji (🌬️) and describe its sails position using [N-S-E-W].": {
-        "check_fn": lambda x: "🌬️" in x and bool(re.findall(r"\[([NSEW]-){3}[NSEW]\]", x)),
+        "check_fn": lambda x: "🌬️" in x
+        and bool(re.findall(r"\[([NSEW]-){3}[NSEW]\]", x)),
         "trigger": "Visit the windmill on the outskirts of town.",
     },
     "When mentioning any Dutch painter or artwork, enclose their name in ⟦artistic brackets⟧ followed by the year in ((parentheses)).": {
@@ -256,13 +257,17 @@ def main():
 
     args.outputs_dir.mkdir(parents=True, exist_ok=True)
     if args.samples != 100:
-        filename = f"stresstest_g{args.guardrails}_w{args.warmup_rounds}_{args.samples}.jsonl"
+        filename = (
+            f"stresstest_g{args.guardrails}_w{args.warmup_rounds}_{args.samples}.jsonl"
+        )
     else:
         filename = f"stresstest_g{args.guardrails}_w{args.warmup_rounds}.jsonl"
 
     if (args.outputs_dir / filename).exists():
         print(f"Loading existing outputs: {filename}")
-        instances = [Instance(**elem) for elem in jsonlines.open(args.outputs_dir / filename)]
+        instances = [
+            Instance(**elem) for elem in jsonlines.open(args.outputs_dir / filename)
+        ]
     else:
         provider = providers.PROVIDERS[args.provider](**args.provider_kwargs)
 
@@ -298,7 +303,9 @@ def main():
                 print("All instances failed, exiting...")
                 break
 
-            print(f"Running round {i+1}/{total_rounds} ({len(active_instances)} active)")
+            print(
+                f"Running round {i+1}/{total_rounds} ({len(active_instances)} active)"
+            )
             rollout_batch(args, i, provider, active_instances)
             evaluate(active_instances)
 
@@ -306,7 +313,10 @@ def main():
             for instance in instances:
                 writer.write(instance.model_dump())
 
-    results = [instance.judgement.get("follows_system_instructions", False) for instance in instances]
+    results = [
+        instance.judgement.get("follows_system_instructions", False)
+        for instance in instances
+    ]
 
     if args.bootstrap > 0:
         pass_rate = sum(results) / len(results)

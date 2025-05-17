@@ -22,6 +22,7 @@ ds = ds.to_list()
 
 for batch in batched(ds, 10):
     print("Batch size:", len(batch))
+
     def msgs_to_str(msgs):
         content = ""
         for msg in msgs:

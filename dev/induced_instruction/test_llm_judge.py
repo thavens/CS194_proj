@@ -72,12 +72,15 @@ Your output should be formatted as follows:
 reasoning: {{Think step by step about the assistant's response}}
 follows_system_instructions: {{true/false}}"""
 
+
 def process_completion(response: str) -> tuple[bool, bool, str]:
     idx = response.find("follows_system_instructions")
     idxr = response.find("reasoning")
     if idx == -1 or idxr == -1:
         return True, False, response
-    judgment = response[idx:].removeprefix("follows_system_instructions:").strip().lower()
+    judgment = (
+        response[idx:].removeprefix("follows_system_instructions:").strip().lower()
+    )
     reasoning = response[idxr:idx].removeprefix("reasoning:").strip()
     if judgment == "true":
         return False, True, reasoning
@@ -86,15 +89,14 @@ def process_completion(response: str) -> tuple[bool, bool, str]:
     else:
         return True, False, reasoning
 
+
 def judge_complete(row: dict) -> dict:
     input_str = ""
     for m in row["messages"]:
         if input_str:
             input_str += "\n"
         input_str += f"[{m['role']}]\n{m['content']}\n"
-    prompt = PROMPT_TEMPLATE.format(
-        input=input_str, guardrail=row["new_instruction"]
-    )
+    prompt = PROMPT_TEMPLATE.format(input=input_str, guardrail=row["new_instruction"])
     failed = True
     while failed:
         response = (
@@ -119,6 +121,7 @@ def judge_complete(row: dict) -> dict:
 # mutates the dataset
 thread_map(judge_complete, dataset, max_workers=128)
 
+
 def claude_complete(messages, system=anthropic.NOT_GIVEN):
     response = (
         anthropic.Anthropic()
@@ -135,6 +138,7 @@ def claude_complete(messages, system=anthropic.NOT_GIVEN):
     )
     return response
 
+
 # Now we want to evaluate the assistant response using claude
 def claude_judge(row: dict) -> dict:
     input_str = ""
@@ -142,10 +146,11 @@ def claude_judge(row: dict) -> dict:
         if input_str:
             input_str += "\n"
         input_str += f"[{m['role']}]\n{m['content']}\n"
-    prompt = PROMPT_TEMPLATE.format(
-        input=input_str, guardrail=row["new_instruction"]
-    )
-    messages = [{"role": "user", "content": prompt}, {"role": "assistant", "content": "reasoning:"}]
+    prompt = PROMPT_TEMPLATE.format(input=input_str, guardrail=row["new_instruction"])
+    messages = [
+        {"role": "user", "content": prompt},
+        {"role": "assistant", "content": "reasoning:"},
+    ]
     response = "reasoning:" + claude_complete(messages)
     failed, judge, reasoning = process_completion(response)
     if failed:
@@ -156,13 +161,16 @@ def claude_judge(row: dict) -> dict:
     row["gt_reasoning"] = reasoning
     row["failed"] = failed
 
+
 # mutates the dataset
 thread_map(claude_judge, dataset, max_workers=128)
 
 # Save the dataset
 dataset = datasets.Dataset.from_list(dataset)
 dataset.save_to_disk("outputs/assistant_responses_judged")
-dataset.push_to_hub("thavens/assistant_responses_judged", commit_message="adding 14b model 2")
+dataset.push_to_hub(
+    "thavens/assistant_responses_judged", commit_message="adding 14b model 2"
+)
 
 # agreements
 # 7b Qwen2.5

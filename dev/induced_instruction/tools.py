@@ -29,10 +29,7 @@ CLAUDE_SCHEMAS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "query": {
-                    "type": "string", 
-                    "description": "The search query"
-                },
+                "query": {"type": "string", "description": "The search query"},
             },
             "required": ["query"],
         },
@@ -43,13 +40,10 @@ CLAUDE_SCHEMAS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "url": {
-                    "type": "string", 
-                    "description": "The webpage url"
-                },
+                "url": {"type": "string", "description": "The webpage url"},
             },
             "required": ["url"],
-        }
+        },
     },
     {
         "name": "generate_image",
@@ -63,7 +57,7 @@ CLAUDE_SCHEMAS = [
                 },
             },
             "required": ["prompt"],
-        }
+        },
     },
     {
         "name": "run_python",
@@ -77,8 +71,8 @@ CLAUDE_SCHEMAS = [
                 },
             },
             "required": ["script"],
-        }
-    }
+        },
+    },
 ]
 
 OPENAI_SCHEMAS = {
@@ -149,17 +143,17 @@ OPENAI_SCHEMAS = {
 QWEN_SCHEMAS = [
     {
         "type": "function",
-            "function": {
-                "name": "search_web",
-                "description": "Search for a text query and view the results page. Use `visit_page` to retrieve full text of a webpage if needed. `search_web` should be used when the user asks for specific information you are unaware or unsure of.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {"type": "string", "description": "The search query"},
-                    },
-                    "required": ["query"],
+        "function": {
+            "name": "search_web",
+            "description": "Search for a text query and view the results page. Use `visit_page` to retrieve full text of a webpage if needed. `search_web` should be used when the user asks for specific information you are unaware or unsure of.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "The search query"},
                 },
+                "required": ["query"],
             },
+        },
     },
     {
         "type": "function",
@@ -211,6 +205,7 @@ QWEN_SCHEMAS = [
     },
 ]
 
+
 @retry(
     wait=wait_fixed(2),
     stop=stop_after_attempt(5),
@@ -259,11 +254,7 @@ def search_web(query, *args, **kwargs):
     return {"content": output}
 
 
-@retry(
-    wait=wait_fixed(5),
-    stop=stop_after_attempt(5),
-    reraise=True
-)
+@retry(wait=wait_fixed(5), stop=stop_after_attempt(5), reraise=True)
 def visit_page(url, maxlen=10000, *args, **kwargs):
     params = {
         "key": os.getenv("SCRAPFLY_API_KEY"),

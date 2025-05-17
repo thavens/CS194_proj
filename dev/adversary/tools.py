@@ -19,8 +19,9 @@ class LLMTools:
         self.summary_content = summarize_instructions(sys_prompt)
 
         self.instructions = get_instructions(sys_prompt)
-        self.instructions = [change_POV(instruction) for instruction in self.instructions]
-        
+        self.instructions = [
+            change_POV(instruction) for instruction in self.instructions
+        ]
 
     def reset(self):
         self.turns = 5

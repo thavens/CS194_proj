@@ -196,10 +196,7 @@ def main():
     if args.bootstrap > 0:
         scores_list = defaultdict(list)
         for _ in range(args.bootstrap):
-            sample = {
-                k: random.choices(results[k], k=len(results[k]))
-                for k in results
-            }
+            sample = {k: random.choices(results[k], k=len(results[k])) for k in results}
             scores_ = compute_scores(sample)
             for k in scores:
                 scores_list[k].append(scores_[k])

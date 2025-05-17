@@ -7,6 +7,7 @@ from trl import SFTConfig, SFTTrainer
 from dev.qwen_template import TEMPLATE
 from dev.induced_instruction.tools import QWEN_SCHEMAS
 
+
 @dataclass
 class ScriptArguments:
     model_path: str = field(
@@ -53,8 +54,8 @@ class ScriptArguments:
         default="assistant_responses",
         metadata={"help": "Subset of the dataset"},
     )
-    
-    
+
+
 parser = HfArgumentParser(ScriptArguments)
 args: ScriptArguments = parser.parse_args_into_dataclasses()[0]
 
@@ -112,11 +113,7 @@ def apply_chat_template_mask_non_assisstant(example):
 dataset = dataset.to_list()
 dataset[:] = map(flatten_lists, dataset)
 dataset[:] = map(apply_chat_template_mask_non_assisstant, dataset)
-dataset = (
-    Dataset.from_list(dataset)
-    .shuffle(seed=42)
-    .remove_columns(["messages"])
-)
+dataset = Dataset.from_list(dataset).shuffle(seed=42).remove_columns(["messages"])
 
 model = AutoModelForCausalLM.from_pretrained(
     args.model_path,

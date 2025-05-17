@@ -670,10 +670,12 @@ class PostscriptChecker(Instruction):
         postscript = re.findall(postscript_pattern, value, flags=re.MULTILINE)
         return True if postscript else False
 
+
 ## TODO
 ## Fix checker for number of sentences
 ## Fix checker for keyword
 ## Make it not pick keywords in the prompt
+
 
 class RephraseChecker(Instruction):
     """Checks the repharse."""

@@ -124,7 +124,9 @@ def batch_complete(msgs_batch: list[dict], progress: Progress) -> list[str]:
         )
         msgs_batch_response: list[Message] = wait_for_batch(status.id, progress)
 
-        active_new = []  # activate is map where index is the generation and the value is the corresponding msgs in msgs_batch
+        active_new = (
+            []
+        )  # activate is map where index is the generation and the value is the corresponding msgs in msgs_batch
         for idx, msg in enumerate(msgs_batch_response):
             messages_idx = active[idx]
             if msg is None:  # failed to generate
@@ -149,7 +151,7 @@ def batch_messages_complete(
 ) -> list[dict]:
     msgs_batch = deepcopy(msgs_batch)
     active = list(range(len(msgs_batch)))
-    
+
     i = 0
     while len(active) > 0:
         i += 1
@@ -165,7 +167,9 @@ def batch_messages_complete(
                     f.write(json.dumps(msgs_batch[idx]) + "\n")
         msgs_batch_response: list[Message] = wait_for_batch(status.id, progress)
 
-        active_new = []  # active is map where index is the generation and the value is the corresponding msgs in msgs_batch
+        active_new = (
+            []
+        )  # active is map where index is the generation and the value is the corresponding msgs in msgs_batch
         for idx, msg in enumerate(msgs_batch_response):
             messages_idx = active[idx]
             if msg is None:  # failed to generate
@@ -203,14 +207,16 @@ def batch_messages_complete(
                     msgs_batch[messages_idx].append(
                         {"role": msg.role, "content": json_content}
                     )
-                    
+
                     if len(tool_results) > 0:
                         msgs_batch[messages_idx].append(
                             {"role": "user", "content": tool_results}
                         )
                         active_new.append(messages_idx)
                     else:
-                        print("[WARNING] No tool results. Returning assistant text only.")
+                        print(
+                            "[WARNING] No tool results. Returning assistant text only."
+                        )
                 else:
                     # only keep this conversation active if we have tool results, or parsing failed so we can generate a new one.
                     active_new.append(messages_idx)

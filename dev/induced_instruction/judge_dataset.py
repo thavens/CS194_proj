@@ -25,12 +25,14 @@ class Data(BaseModel):
     user_query_judgment: Optional[bool] = None
     assistant_response_judgment: Optional[bool] = None
 
+
 def flatten_content_block(anthropic_message: dict) -> str:
     content = ""
     for block in anthropic_message["content"]:
         if block["type"] == "text":
             content += block["text"]
     return content
+
 
 def flatten_content_blocks(anthropic_messages: list[dict]) -> list[Message]:
     system_msg = Message(
