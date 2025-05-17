@@ -9,11 +9,12 @@ from dotenv import load_dotenv
 
 import backoff
 from datasets import load_dataset
-from fireworks.client import Fireworks
 import openai
 from tqdm.auto import tqdm
 import re
-import json, re
+import json
+
+from tqdm.contrib.concurrent import thread_map
 
 # Load environment variables
 load_dotenv()
@@ -164,14 +165,13 @@ def _render_example(ex: dict[str, str | bool]) -> str:
     Format a few-shot example for the judge prompt, showing the instruction,
     assistant reply, and the correct 'gold' verdict.
     """
-    verdict = "true" if ex["gold"] else "false"
+    verdict = "1" if ex["gold"] else "0"
     return (
-        "=== FEW-SHOT EXAMPLE ===\n"
-        f"INSTRUCTION THE ASSISTANT HAD TO FOLLOW::\n{ex['inst']}\n\n"
-        f"ASSISTANT FINAL REPLY:\n{ex['reply']}\n\n"
-        f"VERDICT:\n{verdict}\n"
-        f"EXPLANATION:\n{ex['explanation']}\n"
-        "========================"
+        f"### Rule:\n{ex['inst']}\n\n"
+        f"### Response:\n{ex['reply']}\n\n"
+        f"Score: {verdict}\n"
+        # f"EXPLANATION:\n{ex['explanation']}\n"
+        "---"
     )
 
 
@@ -199,21 +199,44 @@ def build_prompt(example: Dict[str, Any]) -> list[Dict[str, str]]:
         f"ENTIRE MESSAGE:\n{example['messages']}\n\n"
         "VERDICT:"
     )
+    instruction = example["new_instruction"]
+    query = example["messages"][1]["content"][0]
+    response = ""
+    for msg  in example["messages"]:
+        if msg["role"] == "assistant":
+                response += msg["content"]
 
     return [
-        {"role": "system", "content": _SYSTEM_HEADER},
-        {"role": "user", "content": user_msg},
-    ]
+        {"role": "user", "content": f"""\
+This is a test of your judgment abilities. You will be given an rule and a response. You are responsible for answering whether or not the repsonse follows the rule.
+
+# Rule:
+{instruction}
+
+# Response:
+{response}
+
+# Instruction
+The answer is \\boxed{{1}} if the response follows the rule.
+The answer is \\boxed{{0}} if the response does not follow the rule.
+
+If the response follows the rule, the answer is \\boxed{{1}}.
+If the response does not adhere to the rule, the answer is \\boxed{{0}}.
+"""},
+        {"role": "assistant", "content": "\\boxed{"}]
 
 
 @backoff.on_exception(backoff.expo, Exception, max_tries=5)
 def judge_one(prompt: list[Dict[str, str]]) -> bool:
-    client = openai_client if USE_OPENAI else fireworks_client
     resp = client.chat.completions.create(
         model=MODEL_ID,
         messages=prompt,
         temperature=0.0,
-        max_tokens=500,
+        extra_body={
+            "continue_final_message": True,
+            "add_generation_prompt": False,
+        },
+        max_tokens=1024,
     )
 
     # ── NEW parsing block ────────────────────────────────────

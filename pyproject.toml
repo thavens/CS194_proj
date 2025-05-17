@@ -14,7 +14,7 @@ dependencies = [
     "torchaudio",
     "torchvision",
     "trl",
-    "vllm>=0.7.2",
+    "vllm>=0.8.3",
     "wandb>=0.19.9",
     "pudb>=2024.1.3",
     "peft>=0.15.2",
@@ -27,6 +27,7 @@ dependencies = [
     "playwright>=1.51.0",
     "scrapfly-sdk>=0.8.23",
     "agentdojo",
+    "liger-kernel>=0.5.9",
 ]
 
 [build-system]

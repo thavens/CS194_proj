@@ -2,16 +2,31 @@
 import datasets
 import openai
 from copy import deepcopy
-from dev.induced_instruction.tools import OPENAI_SCHEMAS, TOOL_FUNCTIONS
+from dev.induced_instruction.tools import QWEN_SCHEMAS, TOOL_FUNCTIONS
 import json
+import random
+import argparse
 
 from tqdm.contrib.concurrent import thread_map
 
-QWEN_SCHEMA = list(OPENAI_SCHEMAS.values())
 
-dataset = (
-    datasets.load_from_disk("dataset_v2/user_queries").shuffle(seed=52).to_list()[:40]
+# parse args for the number of examples that we want to collect and the path of the dataset we want to output to
+parser = argparse.ArgumentParser(description="Collect Qwen Assistant responses")
+parser.add_argument(
+    "--num_examples",
+    type=int,
+    default=100,
+    help="Number of examples to collect",
 )
+parser.add_argument(
+    "--data_name",
+    type=str,
+    default="qwen_assistant_responses",
+    help="Path to the dataset to save the responses to",
+)
+args = parser.parse_args()
+
+dataset = datasets.load_from_disk("dataset_v2/user_queries").shuffle(seed=random.randint(0, int(1e6))).to_list()[:args.num_examples]
 
 client = openai.OpenAI(api_key="None", base_url="http://localhost:8000/v1")
 model_name = client.models.list().data[0].id
@@ -23,7 +38,7 @@ def tool_use_loop(messages, new_instruction):
         response = client.chat.completions.create(
             model=model_name,
             messages=messages,
-            tools=QWEN_SCHEMA,
+            tools=QWEN_SCHEMAS,
             temperature=0.00,
             max_tokens=2048,
         )
@@ -79,7 +94,7 @@ def get_qwen_response(data_row):
     return messages
 
 
-with open("tmp.json", "w") as f:
+with open(f"tmp_{args.data_name}.json", "w") as f:
     f.write("")
     pass
 
@@ -123,7 +138,7 @@ def reformat_messages(messages):
 
 
 # save as an actual dataset
-with open("tmp.json", "r") as f:
+with open(f"tmp_{args.data_name}.json", "r") as f:
     lines = f.readlines()
     dataset = [json.loads(line) for line in lines]
 
@@ -139,4 +154,4 @@ for row in dataset:
 
 ds = datasets.Dataset.from_list(result)
 print(ds)
-ds.save_to_disk("dataset_v2/qwen_assistant_responses")
+ds.save_to_disk(f"judgment_dataset/{args.data_name}")
